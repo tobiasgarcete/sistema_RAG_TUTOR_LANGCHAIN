@@ -1,0 +1,84 @@
+# Ignorar entorno virtual
+venv/
+env/
+ENV/
+.venv/
+
+# Ignorar archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ignorar base de datos vectorial (puede ser regenerada)
+chroma_db/
+*.db
+*.sqlite
+
+# Ignorar variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Ignorar archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Ignorar archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignorar logs
+*.log
+logs/
+
+# Ignorar documentos (demasiado grandes para Git)
+documentos/*.pdf
+documentos/**/*.pdf
+
+# Mantener estructura de carpetas vacías
+!documentos/.gitkeep
+!documentos/*/.gitkeep
+
+# Ignorar archivos temporales
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Ignorar coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
