@@ -16,6 +16,9 @@ Este proyecto implementa un asistente conversacional que utiliza técnicas de RA
 - **Interfaz web intuitiva**: Desarrollada con Streamlit
 - **100% Local**: No requiere servicios en la nube ni API keys
 
+## Gif de Demostración
+![Demo del Sistema RAG](gif_RAG.gif)
+
 ## Stack Tecnológico
 
 - **Python 3.10+**: Lenguaje de programación principal
