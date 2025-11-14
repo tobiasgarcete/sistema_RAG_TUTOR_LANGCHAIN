@@ -17,7 +17,7 @@ Este proyecto implementa un asistente conversacional que utiliza técnicas de RA
 - **100% Local**: No requiere servicios en la nube ni API keys
 
 ## Gif de Demostración
-![Demo del Sistema RAG](gif_RAG.gif)
+![Demo del Sistema RAG](https://raw.githubusercontent.com/tobiasgarcete/sistema_RAG_TUTOR_LANGCHAIN/main/gif_RAG.gif)
 
 ## Stack Tecnológico
 
