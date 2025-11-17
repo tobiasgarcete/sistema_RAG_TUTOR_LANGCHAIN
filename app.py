@@ -80,9 +80,9 @@ def main():
             for tema_nombre in temas_disponibles:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.write(f"**{tema_nombre}**")
+                    st.write(f"📂 **{tema_nombre}**")
                 with col2:
-                    if st.button( key=f"del_{tema_nombre}", help=f"Eliminar '{tema_nombre}'"):
+                    if st.button("🗑️", key=f"del_{tema_nombre}", help=f"Eliminar '{tema_nombre}'"):
                         rag_system.limpiar_coleccion(tema_nombre)
                         st.rerun()
             
