@@ -21,8 +21,8 @@ class RAGSystem:
         )
         self.llm = OllamaLLM(
             model="llama3.2",
-            temperature=0.2,  # Reducido para respuestas más rápidas y consistentes
-            num_predict=512,  # Limitar tokens de respuesta
+            temperature=0.2,  
+            num_predict=512,  
             base_url="http://localhost:11434"
         )
         
@@ -73,7 +73,7 @@ class RAGSystem:
                 texto_total += doc.page_content.strip()
             
             # Si hay texto suficiente, usar extracción normal
-            if len(texto_total) > 100:  # Al menos 100 caracteres en total
+            if len(texto_total) > 100:  
                 print(f"[OK] Texto extraído correctamente: {len(texto_total)} caracteres")
                 documentos_validos = [doc for doc in documentos if len(doc.page_content.strip()) > 10]
             else:
@@ -104,8 +104,8 @@ class RAGSystem:
             # Dividir en chunks más grandes para procesar más rápido
             print("[PROC] Dividiendo en chunks...")
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1500,  # Aumentado de 1000 a 1500
-                chunk_overlap=150,  # Reducido de 200 a 150
+                chunk_size=1500,  
+                chunk_overlap=150,  
                 separators=["\n\n", "\n", ". ", " ", ""],
                 length_function=len
             )
@@ -201,7 +201,7 @@ RESPUESTA:"""
         
         # Agregar información de fuentes y tema consultado
         if docs:
-            respuesta += f"\n\n---\n**📚 Búsqueda realizada{tema_info}**\n"
+            respuesta += f"\n\n---\n** Búsqueda realizada{tema_info}**\n"
             respuesta += "\n**Fuentes consultadas:**\n"
             fuentes_unicas = set()
             for doc in docs:

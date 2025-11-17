@@ -16,7 +16,7 @@ st.set_page_config(
 
 # Inicializar el sistema RAG
 @st.cache_resource(show_spinner="Inicializando sistema RAG...")
-def init_rag_system(_force_reload=None):
+def init_rag_system():
     """Inicializa el sistema RAG con las colecciones de documentación"""
     return RAGSystem()
 
@@ -33,7 +33,7 @@ def main():
     
     # Sidebar para carga de documentos
     with st.sidebar:
-        st.header("📚 Gestión de Colecciones")
+        st.header(" Gestión de Colecciones")
         
         # Input para el tema/categoría
         tema = st.text_input(
@@ -52,43 +52,43 @@ def main():
         
         # Botón para procesar PDFs
         if uploaded_files and tema:
-            if st.button("📥 Procesar PDFs", use_container_width=True):
+            if st.button("Procesar PDFs", use_container_width=True):
                 with st.spinner(f"Procesando documentos para tema '{tema}'..."):
                     try:
                         # Crear o actualizar colección por tema
                         success = rag_system.procesar_pdfs_subidos(uploaded_files, tema)
                         if success:
-                            st.success(f"✅ {len(uploaded_files)} PDF(s) agregados a '{tema}'")
+                            st.success(f" {len(uploaded_files)} PDF(s) agregados a '{tema}'")
                             st.session_state.pdfs_cargados = True
                             st.rerun()
                         else:
-                            st.error("❌ Error al procesar PDFs")
+                            st.error(" Error al procesar PDFs")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
         elif uploaded_files and not tema:
-            st.warning("⚠️ Ingresa un tema antes de procesar")
+            st.warning(" Ingresa un tema antes de procesar")
         
         st.markdown("---")
         
         # Mostrar colecciones disponibles
         temas_disponibles = rag_system.listar_temas()
         if temas_disponibles:
-            st.success("✅ Colecciones activas")
+            st.success(" Colecciones activas")
             
             # Mostrar estadísticas
             stats = rag_system.obtener_estadisticas()
             for tema_nombre in temas_disponibles:
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.write(f"📂 **{tema_nombre}**")
+                    st.write(f"**{tema_nombre}**")
                 with col2:
-                    if st.button("🗑️", key=f"del_{tema_nombre}", help=f"Eliminar '{tema_nombre}'"):
+                    if st.button( key=f"del_{tema_nombre}", help=f"Eliminar '{tema_nombre}'"):
                         rag_system.limpiar_coleccion(tema_nombre)
                         st.rerun()
             
             # Selector de tema para consultas
             st.markdown("---")
-            st.subheader("🔍 Filtrar búsqueda")
+            st.subheader("Filtrar búsqueda")
             tema_seleccionado = st.selectbox(
                 "Buscar en:",
                 ["Todas las colecciones"] + temas_disponibles,
@@ -96,17 +96,17 @@ def main():
             )
             st.session_state.tema_seleccionado = None if tema_seleccionado == "Todas las colecciones" else tema_seleccionado
         else:
-            st.warning("⚠️ No hay colecciones. Sube PDFs para comenzar")
+            st.warning(" No hay colecciones. Sube PDFs para comenzar")
         
         st.markdown("---")
         
         # Botón para limpiar chat
-        if st.button("🧹 Limpiar Chat", use_container_width=True):
+        if st.button("Limpiar Chat", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
         
         # Botón para limpiar todas las colecciones
-        if st.button("🗑️ Limpiar Todas las Colecciones", use_container_width=True):
+        if st.button(" Limpiar Todas las Colecciones", use_container_width=True):
             st.session_state.pdfs_cargados = False
             st.session_state.messages = []
             rag_system.limpiar_coleccion()
@@ -130,7 +130,7 @@ def main():
         # Verificar que haya colecciones cargadas
         if not rag_system.listar_temas():
             with st.chat_message("assistant"):
-                st.warning("⚠️ Por favor, sube y procesa PDFs primero")
+                st.warning(" Por favor, sube y procesa PDFs primero")
             st.stop()
         
         # Agregar mensaje del usuario al historial
@@ -145,7 +145,7 @@ def main():
         
         # Obtener respuesta del sistema RAG
         with st.chat_message("assistant"):
-            with st.spinner("🔍 Analizando documentos..."):
+            with st.spinner("Analizando documentos..."):
                 try:
                     respuesta = rag_system.obtener_respuesta_temporal(
                         pregunta=prompt,
