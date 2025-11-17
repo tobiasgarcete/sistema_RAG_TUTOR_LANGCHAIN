@@ -8,7 +8,9 @@ Este proyecto implementa un asistente conversacional que utiliza técnicas de RA
 
 ### Características Principales
 
+- **Gestión de colecciones por tema**: Organiza PDFs en categorías (JavaScript, Python, RAG, etc.)
 - **Carga dinámica de PDFs**: Los usuarios pueden subir sus propios documentos
+- **Búsqueda filtrada**: Consulta en una colección específica o en todas simultáneamente
 - **Procesamiento OCR**: Soporte para PDFs con imágenes mediante Tesseract
 - **Búsqueda semántica**: Vectorización con embeddings de Ollama
 - **Respuestas contextualizadas**: Basadas únicamente en el contenido de los documentos
@@ -138,10 +140,18 @@ La aplicación se abrirá automáticamente en `http://localhost:8501`
 
 ### Ejemplos de uso
 
+**Paso 1: Organizar documentación por temas**
+1. Ingresa el tema: "JavaScript"
+2. Sube PDFs de documentación de JavaScript
+3. Procesa los documentos
+
+Repite para otros temas (Python, RAG, Agents, etc.)
+
+**Paso 2: Realizar consultas**
 ```
-Pregunta: ¿Qué temas principales se tratan en este documento?
-Pregunta: ¿Cómo se implementa [concepto específico]?
-Pregunta: ¿Qué dice el documento sobre [tema]?
+Pregunta: ¿Cómo crear un componente React?  [Buscar en: JavaScript]
+Pregunta: ¿Qué es un decorator en Python?   [Buscar en: Python]
+Pregunta: ¿Cómo implementar un agente?      [Buscar en: Todas las colecciones]
 ```
 
 ## Estructura del Proyecto

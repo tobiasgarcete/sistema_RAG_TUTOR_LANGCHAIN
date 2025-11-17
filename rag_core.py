@@ -1,9 +1,4 @@
-﻿"""
-Núcleo del sistema RAG para el Tutor de Documentación Técnica
-Gestiona la ingesta de documentos, vectorización y recuperación de contexto
-"""
-
-import os
+﻿import os
 from typing import List, Dict
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -31,190 +26,17 @@ class RAGSystem:
             base_url="http://localhost:11434"
         )
         
-        # Directorio para almacenar la base de datos vectorial
-        self.persist_directory = "./chroma_db"
-        
-        # Diccionario para almacenar las colecciones
+        # Diccionario para almacenar colecciones por tema
         self.colecciones = {}
-        
-        # Cargar o crear colecciones
-        self._inicializar_colecciones()
-        
-        # Colección temporal para PDFs subidos por usuario
-        self.coleccion_temporal = None
-    
-
-    
-    def _inicializar_colecciones(self):
-        """Inicializa las colecciones de documentos por tema"""
-        # No inicializar colecciones pre-cargadas
-        # El usuario subirá sus propios PDFs dinámicamente
         print("[INFO] Sistema RAG inicializado. Listo para procesar PDFs del usuario.")
-        pass
     
-    def _crear_o_cargar_coleccion(self, collection_name: str, docs_path: str):
-        """Crea o carga una colección de documentos"""
-        persist_path = os.path.join(self.persist_directory, collection_name)
-        
-        # Verificar si ya existe la colección
-        if os.path.exists(persist_path) and os.listdir(persist_path):
-            print(f"[INFO] Cargando colección existente: {collection_name}")
-            vectorstore = Chroma(
-                collection_name=collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=persist_path
-            )
-        else:
-            print(f"[LOAD] Creando nueva colección: {collection_name}")
-            # Cargar documentos PDF del directorio
-            loader = DirectoryLoader(
-                docs_path,
-                glob="**/*.pdf",
-                loader_cls=PyPDFLoader
-            )
-            documentos = loader.load()
-            
-            if not documentos:
-                print(f"[WARN] No se pudieron cargar documentos de {docs_path}")
-                return None
-            
-            # Dividir documentos en chunks
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
-                chunk_overlap=200,
-                length_function=len
-            )
-            chunks = text_splitter.split_documents(documentos)
-            
-            print(f"   [DOC] Procesados {len(documentos)} documentos en {len(chunks)} chunks")
-            
-            # Verificar que tengamos chunks válidos
-            if not chunks or len(chunks) == 0:
-                print(f"   [WARN] No se pudieron extraer chunks de los documentos")
-                print(f"   [INFO] Verifica que los PDFs contengan texto legible (no imágenes)")
-                return None
-            
-            # Crear vectorstore
-            vectorstore = Chroma.from_documents(
-                documents=chunks,
-                embedding=self.embeddings,
-                collection_name=collection_name,
-                persist_directory=persist_path
-            )
-            
-            print(f"   [OK] Colección creada y persistida")
-        
-        return vectorstore
-    
-    def obtener_respuesta(self, pregunta: str, coleccion: str = "General") -> str:
+    def procesar_pdfs_subidos(self, uploaded_files, tema: str):
         """
-        Obtiene una respuesta a la pregunta usando RAG
-        
-        Args:
-            pregunta: La pregunta del usuario
-            coleccion: El tema/colección a consultar
-            
-        Returns:
-            Respuesta generada con contexto y fuentes citadas
-        """
-        # Verificar que la colección exista
-        if coleccion not in self.colecciones:
-            return f"""[ERROR] **Error**: No se encontró la colección para el tema "{coleccion}".
-            
-Por favor:
-1. Crea la carpeta: `./documentos/{coleccion.lower()}/`
-2. Añade archivos PDF de la documentación de LangChain
-3. Reinicia la aplicación
-
-**Colecciones disponibles**: {', '.join(self.colecciones.keys())}"""
-        
-        # Obtener el vectorstore de la colección
-        vectorstore = self.colecciones[coleccion]
-        
-        # Obtener retriever
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-        
-        # Buscar documentos relevantes
-        docs = retriever.invoke(pregunta)
-        
-        # Crear contexto desde los documentos
-        context = "\n\n".join([doc.page_content for doc in docs])
-        
-        # Crear prompt
-        prompt_text = f"""Eres un tutor experto en LangChain. Tu trabajo es ayudar a programadores 
-a entender y usar LangChain respondiendo preguntas basadas ÚNICAMENTE en la documentación oficial.
-
-REGLAS IMPORTANTES:
-1. Solo responde preguntas relacionadas con LangChain
-2. Basa tus respuestas ÚNICAMENTE en el contexto proporcionado
-3. Si la información no está en el contexto, di claramente que no tienes esa información
-4. Cita las fuentes cuando sea posible (menciona la página o sección)
-5. Proporciona ejemplos de código cuando sea relevante
-6. Sé claro, conciso y educativo
-
-Contexto de la documentación:
-{context}
-
-Pregunta del usuario: {pregunta}
-
-Respuesta detallada:"""
-        
-        # Generar respuesta con el LLM
-        respuesta = self.llm.invoke(prompt_text)
-        
-        # Agregar información de fuentes
-        if docs:
-            respuesta += "\n\n---\n**Fuentes consultadas: Fuentes consultadas:**\n"
-            fuentes_unicas = set()
-            for doc in docs:
-                fuente = doc.metadata.get("source", "Desconocido")
-                pagina = doc.metadata.get("page", "N/A")
-                fuente_info = f"- {os.path.basename(fuente)} (Página {pagina})"
-                fuentes_unicas.add(fuente_info)
-            
-            for fuente in fuentes_unicas:
-                respuesta += f"\n{fuente}"
-        
-        return respuesta
-    
-    def ingestar_documentos(self, docs_path: str, coleccion: str):
-        """
-        Ingesta nuevos documentos en una colección existente
-        
-        Args:
-            docs_path: Ruta a los documentos PDF
-            coleccion: Nombre de la colección
-        """
-        if coleccion not in self.colecciones:
-            raise ValueError(f"La colección {coleccion} no existe")
-        
-        # Cargar nuevos documentos
-        loader = DirectoryLoader(
-            docs_path,
-            glob="**/*.pdf",
-            loader_cls=PyPDFLoader
-        )
-        documentos = loader.load()
-        
-        # Dividir en chunks
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
-        )
-        chunks = text_splitter.split_documents(documentos)
-        
-        # Agregar a la colección existente
-        vectorstore = self.colecciones[coleccion]
-        vectorstore.add_documents(chunks)
-        
-        print(f"[OK] Ingesta completada: {len(documentos)} documentos, {len(chunks)} chunks")
-    
-    def procesar_pdfs_subidos(self, uploaded_files):
-        """
-        Procesa PDFs subidos por el usuario y crea una colección temporal
+        Procesa PDFs subidos por el usuario y crea una colección por tema
         
         Args:
             uploaded_files: Lista de archivos subidos desde Streamlit
+            tema: Nombre del tema/categoría para la colección
         
         Returns:
             bool: True si se procesaron correctamente
@@ -298,21 +120,30 @@ Respuesta detallada:"""
                 return False
             
             print(f"[OK] Creados {len(chunks_validos)} chunks")
-            print(f"[PROC] Generando embeddings (esto puede tardar con documentos grandes)...")
+            print(f"[PROC] Generando embeddings para tema '{tema}'...")
             
-            # Crear vectorstore temporal (en memoria)
-            self.coleccion_temporal = Chroma.from_documents(
-                documents=chunks_validos,
-                embedding=self.embeddings,
-                collection_name="temp_user_uploads"
-            )
+            # Crear o actualizar colección por tema
+            collection_name = f"tema_{tema.lower().replace(' ', '_')}"
+            
+            if tema in self.colecciones:
+                # Agregar a colección existente
+                print(f"[INFO] Agregando documentos a la colección existente '{tema}'")
+                self.colecciones[tema].add_documents(chunks_validos)
+            else:
+                # Crear nueva colección
+                self.colecciones[tema] = Chroma.from_documents(
+                    documents=chunks_validos,
+                    embedding=self.embeddings,
+                    collection_name=collection_name
+                )
+                print(f"[OK] Nueva colección '{tema}' creada")
             
             print(f"[OK] Base de datos vectorial creada exitosamente")
             
             # Limpiar directorio temporal
             shutil.rmtree(temp_dir, ignore_errors=True)
             
-            print("[OK] Colección temporal creada")
+            print(f"[OK] Colección '{tema}' lista con {len(chunks_validos)} chunks")
             return True
             
         except Exception as e:
@@ -321,22 +152,30 @@ Respuesta detallada:"""
             traceback.print_exc()
             return False
     
-    def obtener_respuesta_temporal(self, pregunta: str) -> str:
+    def obtener_respuesta_temporal(self, pregunta: str, tema: str = None) -> str:
         """
-        Obtiene respuesta basada en la colección temporal de PDFs del usuario
+        Obtiene respuesta basada en la colección de un tema específico
         
         Args:
             pregunta: Pregunta del usuario
+            tema: Tema específico a consultar (si es None, busca en todas)
         
         Returns:
             Respuesta generada por el LLM con contexto
         """
-        if not self.coleccion_temporal:
+        if not self.colecciones:
             return "[WARN] No hay documentos cargados. Por favor, sube PDFs primero."
         
-        # Buscar documentos relevantes usando búsqueda de similitud
-        # Aumentamos k para obtener más contexto
-        docs = self.coleccion_temporal.similarity_search(pregunta, k=8)
+        # Si se especifica un tema, buscar solo en esa colección
+        if tema and tema in self.colecciones:
+            docs = self.colecciones[tema].similarity_search(pregunta, k=8)
+            tema_info = f" en la colección '{tema}'"
+        else:
+            # Buscar en todas las colecciones
+            docs = []
+            for nombre_tema, coleccion in self.colecciones.items():
+                docs.extend(coleccion.similarity_search(pregunta, k=4))
+            tema_info = " en todas las colecciones"
         
         # Crear contexto desde los documentos
         context = "\n\n".join([doc.page_content for doc in docs])
@@ -360,9 +199,10 @@ RESPUESTA:"""
         # Generar respuesta con el LLM
         respuesta = self.llm.invoke(prompt_text)
         
-        # Agregar información de fuentes
+        # Agregar información de fuentes y tema consultado
         if docs:
-            respuesta += "\n\n---\n**Fuentes consultadas: Fuentes consultadas:**\n"
+            respuesta += f"\n\n---\n**📚 Búsqueda realizada{tema_info}**\n"
+            respuesta += "\n**Fuentes consultadas:**\n"
             fuentes_unicas = set()
             for doc in docs:
                 fuente = doc.metadata.get("source", "Desconocido")
@@ -370,10 +210,24 @@ RESPUESTA:"""
                 fuente_info = f"- {os.path.basename(fuente)} (Página {pagina})"
                 fuentes_unicas.add(fuente_info)
             
-            for fuente in fuentes_unicas:
+            for fuente in sorted(fuentes_unicas):
                 respuesta += f"\n{fuente}"
         
         return respuesta
+    
+    def listar_temas(self) -> List[str]:
+        """Retorna la lista de temas disponibles"""
+        return list(self.colecciones.keys())
+    
+    def obtener_estadisticas(self) -> Dict:
+        """Retorna estadísticas de las colecciones"""
+        stats = {}
+        for tema, coleccion in self.colecciones.items():
+            # Contar documentos en la colección
+            stats[tema] = {
+                "documentos": len(coleccion.get())
+            }
+        return stats
     
     def _extraer_texto_ocr(self, pdf_dir):
         """
@@ -449,8 +303,18 @@ RESPUESTA:"""
             print(f"[ERROR] Error en OCR: {str(e)}")
             return []
     
-    def limpiar_coleccion_temporal(self):
-        """Limpia la colección temporal de PDFs del usuario"""
-        self.coleccion_temporal = None
-        print("🧹 Colección temporal limpiada")
+    def limpiar_coleccion(self, tema: str = None):
+        """
+        Limpia una colección específica o todas
+        
+        Args:
+            tema: Tema a limpiar (si es None, limpia todas)
+        """
+        if tema:
+            if tema in self.colecciones:
+                del self.colecciones[tema]
+                print(f"[OK] Colección '{tema}' eliminada")
+        else:
+            self.colecciones = {}
+            print("[OK] Todas las colecciones eliminadas")
 
